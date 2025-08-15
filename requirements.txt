@@ -86,7 +86,6 @@ opentelemetry-semantic-conventions==0.57b0
 orjson==3.11.2
 overrides==7.7.0
 packaging==25.0
-pysqlite3-binary
 pandas==2.3.1
 pillow==11.3.0
 posthog==5.4.0
