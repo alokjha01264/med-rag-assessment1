@@ -1,3 +1,11 @@
+---
+title: Medical RAG Assistant
+emoji: 🩺
+colorFrom: blue
+colorTo: green
+sdk: gradio
+app_file: gradio_app.py
+---
 # 🩺 Nervesparks Medical Literature RAG Assistant
 
 ## 📖 Project Description
