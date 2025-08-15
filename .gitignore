@@ -6,4 +6,4 @@ __pycache__/
 *.pyc
 
 # Vector Store (Do not track the database)
-vectorstores/
+# vectorstores/
