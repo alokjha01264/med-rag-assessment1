@@ -1,3 +1,8 @@
+import sys
+import pysqlite3
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+
 import streamlit as st
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms import HuggingFacePipeline
@@ -7,13 +12,11 @@ from langchain.chains import RetrievalQA
 import torch
 import os
 
-
 st.set_page_config(
     page_title="Medical RAG Assistant",
     page_icon="🩺",
     layout="wide"
 )
-
 
 with st.sidebar:
     st.title("🩺 Medical RAG Assistant")
@@ -35,8 +38,6 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("Example Questions")
-    
-
     example_questions = [
         "What are the 2017 AHA guideline recommendations for managing high blood pressure?",
         "What is the approximate heritability of Major Depressive Disorder?",
@@ -45,13 +46,10 @@ with st.sidebar:
     
     for question in example_questions:
         if st.button(question):
-           
             st.session_state.question_input = question
 
     st.markdown("---")
     st.info("This is a proof-of-concept and not for clinical use.")
-
-
 
 DB_PATH = "vectorstores/db/"
 MODEL_ID = "google/flan-t5-large"
@@ -59,7 +57,10 @@ MODEL_ID = "google/flan-t5-large"
 @st.cache_resource
 def load_embedding_model():
     print("Loading embedding model...")
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2", model_kwargs={'device': 'cpu'})
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",
+        model_kwargs={'device': 'cpu'}
+    )
 
 @st.cache_resource
 def load_llm():
@@ -98,13 +99,10 @@ def load_rag_chain():
         chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
     )
 
-
 st.header("Ask a Clinical Question")
-
 
 if 'question_input' not in st.session_state:
     st.session_state.question_input = ""
-
 
 question = st.text_input(
     "Enter your question:", 
@@ -126,7 +124,6 @@ if st.button("Get Answer"):
                 st.subheader("📚 Retrieved Sources")
                 for source in result["source_documents"]:
                     with st.expander(f"Source: {os.path.basename(source.metadata['source'])}"):
-                        
                         st.markdown(f"**Content:**\n\n>{source.page_content.replace('\n', '\n> ')}")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
