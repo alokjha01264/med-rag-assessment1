@@ -2,15 +2,28 @@ import sys
 import pysqlite3
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-
 import streamlit as st
+import os
+import subprocess
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.llms import HuggingFacePipeline
 from langchain_chroma import Chroma
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 import torch
-import os
+
+DB_PATH = "vectorstores/db/"
+MODEL_ID = "google/flan-t5-large"
+
+
+if not os.path.exists(DB_PATH) or not os.listdir(DB_PATH):
+    st.warning("Vector DB not found — running ingest.py to build it...")
+    try:
+        subprocess.run(["python", "ingest.py"], check=True)
+        st.success("Database created successfully.")
+    except Exception as e:
+        st.error(f"Failed to create DB: {e}")
+
 
 st.set_page_config(
     page_title="Medical RAG Assistant",
@@ -18,15 +31,15 @@ st.set_page_config(
     layout="wide"
 )
 
+
 with st.sidebar:
-    st.title("🩺 Medical RAG Assistant")
+    st.title("🩺 Nervesparks RAG Assistant")
     st.markdown("""
     This app is a Retrieval-Augmented Generation (RAG) system designed to assist healthcare professionals. 
     It can answer questions based on a curated set of medical documents and synthetic patient data.
     """)
     
     st.markdown("---")
-    
     st.subheader("💡 How to Use")
     st.info("""
     1.  Enter a clinical question in the text box.
@@ -36,27 +49,21 @@ with st.sidebar:
     """)
 
     st.markdown("---")
-
     st.subheader("Example Questions")
     example_questions = [
         "What are the 2017 AHA guideline recommendations for managing high blood pressure?",
         "What is the approximate heritability of Major Depressive Disorder?",
         "What is the primary therapeutic goal in the management of Rheumatoid Arthritis?"
     ]
-    
-    for question in example_questions:
-        if st.button(question):
-            st.session_state.question_input = question
+    for q in example_questions:
+        if st.button(q):
+            st.session_state.question_input = q
 
     st.markdown("---")
     st.info("This is a proof-of-concept and not for clinical use.")
 
-DB_PATH = "vectorstores/db/"
-MODEL_ID = "google/flan-t5-large"
-
 @st.cache_resource
 def load_embedding_model():
-    print("Loading embedding model...")
     return HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2",
         model_kwargs={'device': 'cpu'}
@@ -64,7 +71,6 @@ def load_embedding_model():
 
 @st.cache_resource
 def load_llm():
-    print("Loading Language Model...")
     return HuggingFacePipeline.from_model_id(
         model_id=MODEL_ID,
         task="text2text-generation",
@@ -122,9 +128,12 @@ if st.button("Get Answer"):
                 st.markdown(result["result"])
                 
                 st.subheader("📚 Retrieved Sources")
-                for source in result["source_documents"]:
-                    with st.expander(f"Source: {os.path.basename(source.metadata['source'])}"):
-                        st.markdown(f"**Content:**\n\n>{source.page_content.replace('\n', '\n> ')}")
+                if result["source_documents"]:
+                    for source in result["source_documents"]:
+                        with st.expander(f"Source: {os.path.basename(source.metadata['source'])}"):
+                            st.markdown(f"**Content:**\n\n>{source.page_content.replace('\n', '\n> ')}")
+                else:
+                    st.warning("No sources retrieved for this query.")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
     else:

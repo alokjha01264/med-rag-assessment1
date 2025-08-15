@@ -1,4 +1,4 @@
-# 🩺 Medical Literature RAG Assistant
+# 🩺 Nervesparks Medical Literature RAG Assistant
 
 ## 📖 Project Description
 
