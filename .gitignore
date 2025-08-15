@@ -1,0 +1,9 @@
+# Virtual Environment
+med_rag_env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Vector Store (Do not track the database)
+vectorstores/
